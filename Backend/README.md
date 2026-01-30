@@ -332,3 +332,52 @@ curl -X GET http://localhost:PORT/users/logout \
 - The authentication cookie is cleared from the response
 - Tokens in the blacklist automatically expire after 24 hours (86400 seconds)
 
+---
+
+### POST /captains/register
+
+#### Description
+Registers a new captain (driver). Creates a captain record, hashes the password, and returns a JWT token and the created captain object.
+
+#### Status Codes
+- **201 Created**: Captain created successfully.
+- **400 Bad Request**: Validation error.
+
+#### Required Data Format
+
+```json
+{
+  "fullname": { "firstname": "string", "lastname": "string" },
+  "email": "string",
+  "password": "string",
+  "vehicle": { "color":"string", "plate":"string", "capacity":1, "vehicleType":"car" }
+}
+```
+
+#### Validation Rules
+- `fullname.firstname`: min 3 chars
+- `fullname.lastname`: min 3 chars
+- `email`: valid email
+- `password`: min 6 chars
+- `vehicle.plate`: min 3 chars
+- `vehicle.capacity`: integer >= 1
+- `vehicle.vehicleType`: one of `car`, `motorcycle`, `auto`
+
+#### Response
+**Success (201):** returns `token` and `captain` object.
+
+**Error (400):** returns validation errors array, e.g. invalid vehicle type.
+
+#### Example Request
+```bash
+curl -X POST http://localhost:PORT/captains/register \
+  -H "Content-Type: application/json" \
+  -d '{"fullname":{"firstname":"Jane","lastname":"Doe"},"email":"jane@example.com","password":"password123","vehicle":{"color":"Blue","plate":"ABC123","capacity":4,"vehicleType":"car"}}'
+```
+
+#### Notes
+- Passwords are hashed with `bcrypt` before storage.
+- A JWT token is generated and returned in the response.
+- `vehicleType` is validated in the route and constrained by the Mongoose `enum`.
+
+
