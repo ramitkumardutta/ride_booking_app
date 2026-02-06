@@ -1,5 +1,7 @@
-import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import React, { useState, useContext } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import axios from 'axios'
+import { UserDataContext } from '../context/UserContext'
 
 const UserSignup = () => {
     const [email, setEmail] = useState('');
@@ -8,22 +10,35 @@ const UserSignup = () => {
     const [lastName, setLastName] = useState('');
     const [userData, setUserData] = useState({});
 
-    const submitHandler = (e) => {
+    const navigate = useNavigate();
+
+    const { user, setUser } = React.useContext(UserDataContext)
+
+    const submitHandler = async (e) => {
         e.preventDefault();
         const newUserData = {
-            fullName: {
-                firstName: firstName,
-                lastName: lastName
+            fullname: {
+                firstname: firstName,
+                lastname: lastName
             },
             email: email,
             password: password
-            }
-        setUserData(newUserData);
+        }
+
+        const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/users/register`, newUserData);
+
+        if(response.status === 201) {
+            const data = response.data
+
+            setUser(data.user);
+            localStorage.setItem('token', data.token);
+            navigate('/home')
+        }
+
         setFirstName('');
         setLastName('');
         setEmail('');
         setPassword('');
-        console.log(newUserData);
     }
   return (
     <div className='p-7 h-screen flex flex-col justify-between'>
@@ -87,7 +102,7 @@ const UserSignup = () => {
                 />
 
                 <button className='bg-[#111] text-white font-semibold mb-3 rounded px-4 py-2 w-full text-lg'>
-                    Login
+                    Create account
                 </button>
             </form>
             <p className='text-center'>Already have an account? <Link to='/login' className='text-blue-600'>Login here</Link></p>

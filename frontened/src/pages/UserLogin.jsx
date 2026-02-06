@@ -1,27 +1,68 @@
-import React, {useState} from 'react'
+import React, {useState, useContext, useEffect} from 'react'
 import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom';
+import { UserDataContext } from '../context/UserContext';
+import axios from 'axios'
 
 const UserLogin = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [userData, setUserData] = useState({});
+    const [error, setError] = useState("");
 
-    const submitHandler = (e) => {
+    const { user, setUser } = useContext(UserDataContext)
+    const navigate = useNavigate();
+
+    const submitHandler = async (e) => {
         e.preventDefault();
+        setError("");
+
         const newUserData = {
             email: email,
             password: password
         }
-        setUserData(newUserData);
+
+        try {
+            const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/users/login`, newUserData);
+
+            if(response.status === 200) {
+                const data = response.data
+                setUser(data.user);
+                localStorage.setItem('token', data.token);
+                navigate('/home');
+            }
+        } catch (error) {
+            if(error.response.status === 401) {
+                setError("Incorrect Email ID or Password");
+            } else {
+                setError("Something went wrong. Please try again.");
+            }
+        }
+
         setEmail('');
         setPassword('');
-        console.log(newUserData);
     }
+
+    useEffect(() => {
+        if(error) {
+            const timer = setTimeout(() => 
+                setError(""), 3000
+            );
+            return () => clearTimeout(timer);
+        }
+    }, [error]);
 
   return (
     <div className='p-7 h-screen flex flex-col justify-between'>
         <div>
             <img className='w-16 mb-10' src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png" alt="Uber Logo" />
+
+            {error && (
+                <div className="mb-4 bg-red-100 text-red-700 px-4 py-2 rounded text-center">
+                    {error}
+                </div>
+            )}
+
             <form onSubmit={(e) => {
                 submitHandler(e)
             }}>
